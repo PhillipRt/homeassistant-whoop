@@ -70,21 +70,21 @@ class WhoopSensor(Entity):
         """Return the state attributes."""
         return self._state_attributes
 
-    def update(self):
+    async def async_update(self):
         """Fetch new state data for the sensor."""
         try:
-            data = self._api.get_data(self._path)
+            data = await self._api.get_data(self._path)
         except requests.HTTPError as ex:
             if ex.response.status_code == 401:  # Unauthorized
                 # Refresh the access token
                 home_assistant = self.hass
                 oauth2_impl = home_assistant.helpers.application_credentials.async_get_auth_implementation(
                     DOMAIN)
-                new_token = oauth2_impl.refresh_token(self._api.access_token)
+                new_token = await oauth2_impl.refresh_token(self._api.access_token)
                 # Update the WhoopApiClient with the new access token
                 self._api.access_token = new_token
                 # Retry the request
-                data = self._api.get_data(self._path)
+                data = await self._api.get_data(self._path)
             else:
                 raise
 
@@ -93,6 +93,7 @@ class WhoopSensor(Entity):
         # Extract the state attributes from the data
         for attribute in self._attributes:
             self._state_attributes[attribute] = data.get(attribute)
+
 
 
 class WhoopDevice(Entity):
