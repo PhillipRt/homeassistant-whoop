@@ -22,7 +22,7 @@ class OAuth2FlowHandler(config_entry_oauth2_flow.AbstractOAuth2FlowHandler, doma
         errors = {}
         if user_input is not None:
             return self.async_create_entry(
-                title=user_input["client_id"], 
+                title=user_input["client_id"],
                 data={
                     "client_id": user_input["client_id"],
                     "client_secret": user_input["client_secret"]
@@ -48,9 +48,10 @@ class OAuth2FlowHandler(config_entry_oauth2_flow.AbstractOAuth2FlowHandler, doma
         return await super().async_step_creation(user_input)
 
     async def async_oauth_create_entry(self, data: dict) -> dict:
-        """Create an entry for the flow.
-
-        Ok to override if you want to provide extra info for the creation of
-        the entry.
-        """
+        """Create an entry for the flow."""
         return self.async_create_entry(title=self.flow_impl.name, data=data)
+
+    async def async_get_access_token(self) -> str:
+        """Return a valid access token."""
+        auth_implementation = self.hass.helpers.application_credentials.async_get_auth_implementation(DOMAIN)
+        return await auth_implementation.async_get_access_token()
