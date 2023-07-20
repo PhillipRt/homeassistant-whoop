@@ -2,6 +2,7 @@
 import asyncio
 import aiohttp
 import logging
+import base64
 import requests
 
 from homeassistant.config_entries import ConfigEntry
@@ -42,17 +43,22 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 
 
+
+
 class WhoopApiClient:
     """Class to communicate with the Whoop API."""
 
     def __init__(self, config):
         """Initialize the Whoop API client."""
-        self.access_token = config["access_token"]
-
+        self.client_id = config["client_id"]
+        self.client_secret = config["client_secret"]
+        self.token_url = "https://api.prod.whoop.com/oauth/oauth2/token"
+        self.refresh_token = config.get("refresh_token")
 
     async def get_data(self, endpoint):
         """Retrieve data from the Whoop API."""
-        headers = {"Authorization": f"Bearer {self.access_token}"}
+        access_token = await self.get_access_token()
+        headers = {"Authorization": f"Bearer {access_token}"}
         url = f"https://api.prod.whoop.com/{endpoint}"
         
         async with aiohttp.ClientSession() as session:
@@ -60,4 +66,16 @@ class WhoopApiClient:
                 data = await resp.json()
                 return data
 
-    
+    async def get_access_token(self):
+        """Retrieve access token using refresh token."""
+        payload = {
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "scope": "offline"
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.token_url, data=payload) as resp:
+                data = await resp.json()
+                return data["access_token"]
