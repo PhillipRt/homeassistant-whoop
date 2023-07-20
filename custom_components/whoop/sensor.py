@@ -7,9 +7,10 @@ from .const import DOMAIN
 SCAN_INTERVAL = timedelta(minutes=10)
 
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Whoop sensor platform."""
-    api = hass.data[DOMAIN]
+    api = hass.data[DOMAIN][config_entry.entry_id]
     sensors = []
 
     # Create a sensor for each data point we want to track
@@ -27,7 +28,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     device = WhoopDevice(user_data)
     sensors.append(device)
 
-    add_entities(sensors, True)
+    async_add_entities(sensors, True)
+
 
 
 class WhoopSensor(Entity):
@@ -108,6 +110,6 @@ class WhoopDevice(Entity):
             identifiers={(DOMAIN, self._name)},
             name=self._name,
             manufacturer="Whoop",
-            model="Whoop Strap 3.0",
+            model="Whoop Strap 4.0",
             sw_version="1.0",
         )
