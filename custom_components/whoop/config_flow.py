@@ -1,16 +1,14 @@
 """Config flow for Whoop."""
+import logging
 import voluptuous as vol
 from homeassistant import config_entries, core, exceptions
 from homeassistant.helpers import config_entry_oauth2_flow
 
 from .const import DOMAIN
 
-
 class OAuth2FlowHandler(
     config_entry_oauth2_flow.AbstractOAuth2FlowHandler, domain=DOMAIN
 ):
-    """Config flow to handle Whoop OAuth2 authentication."""
-
     DOMAIN = DOMAIN
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
@@ -24,33 +22,26 @@ class OAuth2FlowHandler(
         if self.hass.config_entries.async_entries(DOMAIN):
             return self.async_abort(reason="single_instance_allowed")
 
+        return await self.async_step_discovery(user_input)
+
+    async def async_step_discovery(self, user_input=None):
+        """Handle redirection to Whoop website for OAuth2 flow."""
+        return await self.async_step_auth()
+
+    async def async_step_auth(self, user_input=None):
+        """Handle redirection back from Whoop website after user's approval."""
+        return await self.async_step_code(user_input)
+
+    async def async_step_code(self, user_input=None):
+        """Handle the reception of the authorization code from Whoop."""
         if user_input is None:
-            return self.async_show_form(
-                step_id="user",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required("client_id"): str,
-                        vol.Required("client_secret"): str,
-                    }
-                ),
-            )
+            return self.async_external_step_done(next_step_id="creation")
 
-        try:
-            info = await validate_input(self.hass, user_input)
-            return self.async_create_entry(title=info["title"], data=user_input)
-        except CannotConnect:
-            return self.async_abort(reason="cannot_connect")
-        except InvalidAuth:
-            return self.async_abort(reason="invalid_auth")
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception")
-            return self.async_abort(reason="unknown")
+        return await self.async_step_creation(user_input)
 
-    async def async_step_creation(self, user_input=None):
+    async def async_step_creation(self, user_input=None, error=None):
         """Handle callback from Whoop API."""
-        return await self.async_step_user()
+        if user_input is None:
+            return self.async_external_step_done(next_step_id="creation")
 
-async def validate_input(hass: core.HomeAssistant, data):
-    """Validate the user input allows us to connect."""
-    # TODO: validate the input
-    return {"title": f"Whoop {data['client_id']}"}
+        return await self.async_oauth_create_entry(user_input)

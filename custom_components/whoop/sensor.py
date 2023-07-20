@@ -1,5 +1,7 @@
 """Platform for Whoop sensor integration."""
 from datetime import timedelta
+
+import requests
 from homeassistant.helpers.entity import Entity, DeviceInfo
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
 
@@ -7,18 +9,22 @@ from .const import DOMAIN
 SCAN_INTERVAL = timedelta(minutes=10)
 
 
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Whoop sensor platform."""
-    api = hass.data[DOMAIN][config_entry.entry_id]
+    config = {"access_token": config_entry.data["access_token"]}
+    api = WhoopApiClient(config)
     sensors = []
 
     # Create a sensor for each data point we want to track
     for path, name, unit, attributes in [
-        ("cycle", "Strain", "strain", ["kilojoule", "average_heart_rate", "max_heart_rate"]),
-        ("recovery", "Recovery Score", "recovery_score", ["resting_heart_rate", "hrv_rmssd_milli", "spo2_percentage", "skin_temp_celsius"]),
-        ("sleep", "Sleep Performance", "sleep_performance_percentage", ["sleep_consistency_percentage", "sleep_efficiency_percentage", "respiratory_rate"]),
-        ("workout", "Workout Strain", "strain", ["average_heart_rate", "max_heart_rate", "kilojoule", "distance_meter", "altitude_gain_meter", "altitude_change_meter"]),
+        ("cycle", "Strain", "strain", [
+         "kilojoule", "average_heart_rate", "max_heart_rate"]),
+        ("recovery", "Recovery Score", "recovery_score", [
+         "resting_heart_rate", "hrv_rmssd_milli", "spo2_percentage", "skin_temp_celsius"]),
+        ("sleep", "Sleep Performance", "sleep_performance_percentage", [
+         "sleep_consistency_percentage", "sleep_efficiency_percentage", "respiratory_rate"]),
+        ("workout", "Workout Strain", "strain", ["average_heart_rate", "max_heart_rate",
+         "kilojoule", "distance_meter", "altitude_gain_meter", "altitude_change_meter"]),
         # TODO: Add more data points here
     ]:
         sensors.append(WhoopSensor(api, name, unit, path, attributes))
@@ -29,7 +35,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     sensors.append(device)
 
     async_add_entities(sensors, True)
-
 
 
 class WhoopSensor(Entity):
@@ -67,7 +72,22 @@ class WhoopSensor(Entity):
 
     def update(self):
         """Fetch new state data for the sensor."""
-        data = self._api.get_data(self._path)
+        try:
+            data = self._api.get_data(self._path)
+        except requests.HTTPError as ex:
+            if ex.response.status_code == 401:  # Unauthorized
+                # Refresh the access token
+                home_assistant = self.hass
+                oauth2_impl = home_assistant.helpers.application_credentials.async_get_auth_implementation(
+                    DOMAIN)
+                new_token = oauth2_impl.refresh_token(self._api.access_token)
+                # Update the WhoopApiClient with the new access token
+                self._api.access_token = new_token
+                # Retry the request
+                data = self._api.get_data(self._path)
+            else:
+                raise
+
         self._state = data.get(self._unit)  # Extract the state from the data
 
         # Extract the state attributes from the data

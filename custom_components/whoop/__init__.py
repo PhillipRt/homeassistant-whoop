@@ -1,4 +1,6 @@
 """The Whoop integration."""
+import asyncio
+import aiohttp
 import logging
 import requests
 
@@ -6,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
+PLATFORMS = ["sensor"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,23 +27,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
-    hass.config_entries.async_forward_entry_unload(entry, "sensor")
-    del hass.data[DOMAIN][entry.entry_id]
-    return True
+    unload_ok = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, platform)
+                for platform in PLATFORMS
+            ]
+        )
+    )
+    if unload_ok:
+        hass.data[DOMAIN].pop(entry.entry_id)
+
+    return unload_ok
+
+
 
 class WhoopApiClient:
     """Class to communicate with the Whoop API."""
 
     def __init__(self, config):
         """Initialize the Whoop API client."""
-        self.client_id = config["client_id"]
-        self.client_secret = config["client_secret"]
-        self._session = requests.Session()
+        self.access_token = config["access_token"]
 
-    def get_data(self, endpoint):
+
+    async def get_data(self, endpoint):
         """Retrieve data from the Whoop API."""
-        url = f"https://api-7.whoop.com/{endpoint}"
-        response = self._session.get(url, auth=(self.client_id, self.client_secret))
-        response.raise_for_status()
-        return response.json()
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        url = f"https://api.prod.whoop.com/{endpoint}"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as resp:
+                data = await resp.json()
+                return data
+
     
