@@ -1,6 +1,6 @@
 """Platform for Whoop sensor integration."""
 from datetime import timedelta
-
+from . import WhoopApiClient
 import requests
 from homeassistant.helpers.entity import Entity, DeviceInfo
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
