@@ -43,3 +43,4 @@ class WhoopApiClient:
         response = self._session.get(url, auth=(self.client_id, self.client_secret))
         response.raise_for_status()
         return response.json()
+
