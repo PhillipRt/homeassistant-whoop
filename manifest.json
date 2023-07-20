@@ -1,0 +1,13 @@
+{
+    "domain": "whoop",
+    "name": "Whoop",
+    "config_flow": true,
+    "documentation": "https://www.home-assistant.io/integrations/whoop",
+    "requirements": [],
+    "ssdp": [],
+    "zeroconf": [],
+    "homekit": {},
+    "dependencies": [],
+    "codeowners": []
+  }
+  
