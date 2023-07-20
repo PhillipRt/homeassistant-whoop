@@ -1,6 +1,5 @@
 from aiohttp import ClientSession
 from . import WhoopOAuth2Implementation
-from homeassistant.helpers import application_credentials
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from .const import DOMAIN

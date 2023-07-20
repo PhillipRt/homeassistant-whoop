@@ -2,7 +2,7 @@ from homeassistant.helpers import config_entry_oauth2_flow, network
 from aiohttp import ClientSession
 from typing import Any
 
-class WhoopOAuth2Implementation(config_entry_oauth2_flow.AbstractOAuth2Implementation):
+class WhoopOAuth2Implementation(config_entry_oauth2_flow.OAuth2Implementation):
     def __init__(self, hass, client_id, client_secret):
         self.hass = hass
         self._client_id = client_id
