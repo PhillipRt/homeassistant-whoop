@@ -1,6 +1,8 @@
 """Config flow for Whoop."""
 import logging
 import voluptuous as vol
+from . import WhoopOAuth2Implementation
+
 from homeassistant import config_entries, core, exceptions
 from homeassistant.helpers import config_entry_oauth2_flow
 
@@ -21,24 +23,26 @@ class OAuth2FlowHandler(config_entry_oauth2_flow.AbstractOAuth2FlowHandler, doma
         """Handle a flow start."""
         errors = {}
         if user_input is not None:
-            return self.async_create_entry(
-                title=user_input["client_id"],
-                data={
-                    "client_id": user_input["client_id"],
-                    "client_secret": user_input["client_secret"]
-                }
+            implementation = WhoopOAuth2Implementation(
+                self.hass,
+                user_input["client_id"],
+                user_input["client_secret"]
             )
+            self.hass.helpers.config_entry_oauth2_flow.async_register_implementation(
+                self.hass, implementation
+            )
+            return await self.async_step_discovery()
 
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("client_id"): str,
-                    vol.Required("client_secret"): str,
-                }
-            ),
-            errors=errors,
-        )
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required("client_id"): str,
+                        vol.Required("client_secret"): str,
+                    }
+                ),
+                errors=errors,
+            )
 
     async def async_step_creation(self, user_input=None):
         """Handle a flow start."""
@@ -51,7 +55,3 @@ class OAuth2FlowHandler(config_entry_oauth2_flow.AbstractOAuth2FlowHandler, doma
         """Create an entry for the flow."""
         return self.async_create_entry(title=self.flow_impl.name, data=data)
 
-    async def async_get_access_token(self) -> str:
-        """Return a valid access token."""
-        auth_implementation = self.hass.helpers.application_credentials.async_get_auth_implementation(DOMAIN)
-        return await auth_implementation.async_get_access_token()

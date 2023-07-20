@@ -1,6 +1,5 @@
 """Platform for Whoop sensor integration."""
 from datetime import timedelta
-from . import WhoopApiClient
 import requests
 from homeassistant.helpers.entity import Entity, DeviceInfo
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
@@ -11,8 +10,8 @@ SCAN_INTERVAL = timedelta(minutes=10)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Whoop sensor platform."""
-    config = {"access_token": config_entry.data["access_token"]}
-    api = WhoopApiClient(config)
+    api = hass.data[DOMAIN][config_entry.entry_id]
+
     sensors = []
 
     # Create a sensor for each data point we want to track
@@ -78,15 +77,17 @@ class WhoopSensor(Entity):
             if ex.response.status_code == 401:  # Unauthorized
                 # Refresh the access token
                 home_assistant = self.hass
-                oauth2_impl = home_assistant.helpers.application_credentials.async_get_auth_implementation(
-                    DOMAIN)
+                oauth2_impl = home_assistant.helpers.application_credentials.async_get_auth_implementation(DOMAIN)
                 new_token = await oauth2_impl.refresh_token(self._api.access_token)
+                
                 # Update the WhoopApiClient with the new access token
                 self._api.access_token = new_token
+
                 # Retry the request
                 data = await self._api.get_data(self._path)
             else:
                 raise
+
 
         self._state = data.get(self._unit)  # Extract the state from the data
 
