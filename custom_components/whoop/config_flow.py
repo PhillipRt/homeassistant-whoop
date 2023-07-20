@@ -1,4 +1,5 @@
 """Config flow for Whoop."""
+import voluptuous as vol
 from homeassistant import config_entries, core, exceptions
 from homeassistant.helpers import config_entry_oauth2_flow
 
