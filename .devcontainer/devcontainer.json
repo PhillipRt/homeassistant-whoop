@@ -1,7 +1,10 @@
 {
-  "name": "Home Assistant Development",
-  "dockerFile": "Dockerfile",
-  "forwardPorts": [8123],
-  "postCreateCommand": "pip install -r requirements.txt",
-  "extensions": ["ms-python.python"]
+  "image": "homeassistant/home-assistant:dev",
+  "appPort": [8123],
+  "postCreateCommand": "pip install -e /workspaces/homeassistant-whoop",
+  "workspaceMount": "source=${localWorkspaceFolder}/custom_components/whoop,target=/config/custom_components/whoop,type=bind,consistency=cached",
+  "extensions": [
+    "ms-python.python"
+  ]
 }
+
