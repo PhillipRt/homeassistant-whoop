@@ -1,0 +1,16 @@
+homeassistant:
+  name: Home
+  latitude: 52.3676
+  longitude: 4.9041
+  elevation: 0
+  unit_system: metric
+  currency: EUR
+  external_url: "http://localhost:8123"
+  allowlist_external_dirs:
+    - "/usr/var/dumping-ground"
+    - "/tmp"
+  legacy_templates: false
+custom_components:
+  whoop:
+    client_id: YOUR_CLIENT_ID
+    client_secret: YOUR_CLIENT_SECRET

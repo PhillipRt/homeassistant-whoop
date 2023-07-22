@@ -1,0 +1,7 @@
+{
+  "name": "Home Assistant Development",
+  "dockerFile": "Dockerfile",
+  "forwardPorts": [8123],
+  "postCreateCommand": "pip install -r requirements.txt",
+  "extensions": ["ms-python.python"]
+}
