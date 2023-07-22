@@ -1,8 +1,20 @@
 {
   "image": "homeassistant/home-assistant:dev",
   "forwardPorts": [8123],
-  "workspaceMount": "source=${localWorkspaceFolder}/custom_components/whoop,target=/config/custom_components/whoop,type=bind,consistency=cached",
-  "extensions": [
-      "ms-python.python"
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      },
+      "extensions": [
+        "ms-python.python"
+      ]
+    }
+  },
+  
+  "workspaceMount": "source=${localWorkspaceFolder}/custom_components,target=/config/custom_components,type=bind,consistency=cached",
+  "postCreateCommand": [
+    "cp ${localWorkspaceFolder}/configuration.yaml /config/configuration.yaml",
+    "echo 'Custom component mounted and Home Assistant Core running'"
   ]
 }

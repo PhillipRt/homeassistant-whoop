@@ -1,0 +1,9 @@
+homeassistant:
+  name: Home
+  latitude: 53.5511
+  longitude: 9.9937
+  unit_system: metric
+  currency: EUR
+  external_url: "http://localhost:8123"
+  allowlist_external_dirs:
+    - "/config/custom_components"
